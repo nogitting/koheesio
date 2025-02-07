@@ -90,6 +90,12 @@ class SparkExpectationsTransformation(Transformation):
         alias="drop_meta_columns",
         description="Whether to drop meta columns added by spark expectations on the output df",
     )
+    write_to_temp_table: bool = Field(
+        default=False,
+        alias="write_to_temp_table",
+        description="Whether to write the input dataframe into a temp table, "
+        "so that it breaks the spark plan and might speed up the job in cases of complex dataframe lineage",
+    )
 
     class Output(Transformation.Output):
         """Output of the SparkExpectationsTransformation step."""
@@ -151,10 +157,10 @@ class SparkExpectationsTransformation(Transformation):
         @self._se.with_expectations(
             target_table=self.target_table,
             user_conf=self.se_user_conf,
-            # Below params are `False` by default, however exposing them here for extra visibility
-            # The writes can be handled by downstream Koheesio steps
+            write_to_temp_table=self.write_to_temp_table,
+            # Below param is `False` by default, however exposing it here for extra visibility.
+            # The write can be handled by downstream Koheesio steps.
             write_to_table=False,
-            write_to_temp_table=False,
         )
         def inner(df: DataFrame) -> DataFrame:
             """Just a wrapper to be able to use Spark Expectations decorator"""
